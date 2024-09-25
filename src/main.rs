@@ -1,17 +1,56 @@
-use windows::Win32::Media::Audio::Endpoints::IAudioMeterInformation;
-use windows::Win32::Media::Audio::{IMMDeviceEnumerator, eRender, eConsole};
-use windows::Win32::System::Com::{
-    CoCreateInstance, CoInitalize, CLSCTX_ALL
+use windows::Win32::{
+    Media::Audio::{
+        Endpoints::IAudioMeterInformation,
+        IMMDeviceEnumerator,
+        MMDeviceEnumerator,
+        eRender,
+        eConsole
+    },
+    System::Com::{
+        CoCreateInstance,
+        CoInitialize,
+        CoUninitialize,
+        CLSCTX_ALL
+    }
 };
 
+/*
+TODO:
+auto update device
+take 64 averages 
+change the defualt devices audio volume based on the average but cap the change to -5 to +5 volume levels
+*/
+
+//Many of the methods in WASAPI return error code AUDCLNT_E_DEVICE_INVALIDATED if the audio endpoint device that a client application is using becomes invalid. 
+// USE THIS "FEATURE" TO DETERMINE WHEN THE USER HAS SWITCHED AUDIO DEVICES
+
+
+// Before moving forward, check that the user can control valve audio devices. If the change is reflected
+// in the headset then use windows api
+// if the change is not reflected in the headset use open vr api to change the voulme in steam vr.
+
 fn main() {
-    CoInitalize();
-    let immde: IMMDeviceEnumerator = unsafe{CoCreateInstance(&IMMDeviceEnumerator, None, CLSCTX_ALL)}.unwrap();
+    unsafe{let _ = CoInitialize(None);}; // Null
+    let immde: IMMDeviceEnumerator = unsafe{CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)}.unwrap();
 
-    unsafe {
-        let dae = immde.GetDefaultAudioEndpoint(eRender, role).unwrap();
-        let meter_info = dae.Activate::<IAudioMeterInformation>(CLSCTX_ALL, None).unwrap();
+    let dae = unsafe{immde.GetDefaultAudioEndpoint(eRender, eConsole)}.unwrap();
 
-    }
-    println!("Hello, world!");
+    // Obtains a reference to the IAudioClient interface of an audio endpoint device by calling the IMMDevice::Activate method with parameter iid set to REFIID IID_IAudioClient
+    let meter_info = unsafe{dae.Activate::<IAudioMeterInformation>(CLSCTX_ALL, None)}.unwrap();
+
+
+    let peak_db: f32 = unsafe{meter_info.GetPeakValue()}.unwrap();
+
+    dbg!(peak_db);
+    
+
+    unsafe{let _ = CoUninitialize();}; // call to free up resources
 }
+
+/*
+MS REFERENCES
+https://learn.microsoft.com/en-us/windows/win32/coreaudio/wasapi
+https://learn.microsoft.com/en-us/windows/win32/coreaudio/volume-controls
+
+
+*/
