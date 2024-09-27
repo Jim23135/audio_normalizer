@@ -13,6 +13,7 @@ use windows::Win32::{
         CLSCTX_ALL
     }
 };
+use std::{thread, time};
 
 /*
 TODO:
@@ -38,10 +39,13 @@ fn main() {
     // Obtains a reference to the IAudioClient interface of an audio endpoint device by calling the IMMDevice::Activate method with parameter iid set to REFIID IID_IAudioClient
     let meter_info = unsafe{dae.Activate::<IAudioMeterInformation>(CLSCTX_ALL, None)}.unwrap();
 
+    loop {
+        let peak_db: f32 = unsafe{meter_info.GetPeakValue()}.unwrap();
 
-    let peak_db: f32 = unsafe{meter_info.GetPeakValue()}.unwrap();
+        dbg!(peak_db * 100 as f32);
 
-    dbg!(peak_db);
+        thread::sleep(time::Duration::from_millis(50));
+    }
     
 
     unsafe{let _ = CoUninitialize();}; // call to free up resources
