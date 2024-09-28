@@ -21,17 +21,12 @@ use std::{thread, time};
 /*
 TODO:
 auto update device
-take 64 averages 
-change the defualt devices audio volume based on the average but cap the change to -5 to +5 volume levels
 */
 
 //Many of the methods in WASAPI return error code AUDCLNT_E_DEVICE_INVALIDATED if the audio endpoint device that a client application is using becomes invalid. 
 // USE THIS "FEATURE" TO DETERMINE WHEN THE USER HAS SWITCHED AUDIO DEVICES
 
 
-// Before moving forward, check that the user can control valve audio devices. If the change is reflected
-// in the headset then use windows api
-// if the change is not reflected in the headset use open vr api to change the voulme in steam vr.
 
 fn get_average(samples: &[f32]) -> f32 {
     let sum: f32 = samples.iter().sum();
@@ -56,7 +51,7 @@ fn main() {
     let max_flevel: f32 = original_flevel + 0.02;
     let min_flevel: f32 = original_flevel - 0.02;
 
-    let target_dbs: f32 = 4.0;
+    let target_dbs: f32 = 4.0; // Need to figure out how to figure out the perfect db and also calibrate it auto for new audio devices.
     let max_dbs: f32 = target_dbs + 0.50;
     let min_dbs: f32 = target_dbs - 0.50;
 
@@ -108,6 +103,4 @@ fn main() {
 MS REFERENCES
 https://learn.microsoft.com/en-us/windows/win32/coreaudio/wasapi
 https://learn.microsoft.com/en-us/windows/win32/coreaudio/volume-controls
-
-
 */
